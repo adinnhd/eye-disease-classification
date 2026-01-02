@@ -1,0 +1,95 @@
+import streamlit as st
+import tensorflow as tf
+import numpy as np
+import json
+import os
+from utils import preprocess_image
+
+# 1. Page Configuration
+st.set_page_config(
+    page_title="Eye Disease Classifier",
+    page_icon="👁️",
+    layout="centered"
+)
+
+# 2. Constants & Paths
+MODEL_PATH = "saved_models/mobilenet_fundus.keras"
+CLASS_NAMES_PATH = "saved_models/class_names.json"
+
+# 3. Load Resources (Cached)
+
+@st.cache_resource
+def load_model():
+    if not os.path.exists(MODEL_PATH):
+        st.error(f"❌ Model file not found at: `{MODEL_PATH}`")
+        st.info("Please make sure you have uploaded the model file to the correct path in your repository.")
+        st.stop()
+    
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH)
+        return model
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        st.stop()
+
+@st.cache_data
+def load_class_names():
+    if not os.path.exists(CLASS_NAMES_PATH):
+        st.error(f"❌ Class names file not found at: `{CLASS_NAMES_PATH}`")
+        st.info("Please create a `class_names.json` file in `saved_models/` containing a list of your class names.")
+        st.stop()
+        
+    try:
+        with open(CLASS_NAMES_PATH, "r") as f:
+            class_names = json.load(f)
+        return class_names
+    except Exception as e:
+        st.error(f"❌ Error loading class names: {e}")
+        st.stop()
+
+# 4. Main App UI
+def main():
+    st.title("👁️ Eye Disease Classification")
+    st.write("Upload a fundus image (retina) to detect potential eye diseases.")
+    
+    # Load model and classes
+    model = load_model()
+    class_names = load_class_names()
+    
+    # File Uploader
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    
+    if uploaded_file is not None:
+        # Display Image
+        st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+        
+        # Predict Button
+        if st.button("🔍 Predict Disease"):
+            with st.spinner("Analyzing image..."):
+                try:
+                    # Preprocess
+                    input_tensor = preprocess_image(uploaded_file)
+                    
+                    # Inference
+                    logits = model.predict(input_tensor)
+                    
+                    # Post-processing
+                    probabilities = tf.nn.softmax(logits).numpy()[0]
+                    predicted_index = np.argmax(probabilities)
+                    predicted_class = class_names[predicted_index]
+                    confidence = probabilities[predicted_index] * 100
+                    
+                    # Display Results
+                    st.success("Analysis Complete!")
+                    st.metric(label="Predicted Class", value=predicted_class)
+                    st.metric(label="Confidence", value=f"{confidence:.2f}%")
+                    
+                    # Optional: Show warnings for low confidence
+                    if confidence < 60:
+                        st.warning("⚠️ Low confidence prediction. Please consult a specialist.")
+                        
+                except Exception as e:
+                    st.error(f"An error occurred during prediction: {e}")
+
+if __name__ == "__main__":
+    main()

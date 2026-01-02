@@ -1,0 +1,46 @@
+{
+  "IMG_SIZE": [
+    256,
+    256
+  ],
+  "CLASSICAL_SIZE": [
+    256,
+    256
+  ],
+  "HOG": {
+    "orientations": 9,
+    "pixels_per_cell": [
+      16,
+      16
+    ],
+    "cells_per_block": [
+      2,
+      2
+    ]
+  },
+  "LBP": {
+    "P": 16,
+    "R": 2,
+    "method": "uniform"
+  },
+  "GLCM": {
+    "distances": [
+      1,
+      2
+    ],
+    "angles": [
+      "0",
+      "45",
+      "90",
+      "135"
+    ],
+    "levels": 32
+  },
+  "COLOR_STATS": "HSV mean & std",
+  "PREPROCESS": [
+    "resize",
+    "green channel",
+    "CLAHE",
+    "Gaussian blur"
+  ]
+}

@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large unused models (GitHub limit 100MB)
+*.joblib
+saved_models/knn_fundus.joblib
+saved_models/svm_fundus.joblib
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
