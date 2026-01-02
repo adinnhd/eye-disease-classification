@@ -59,6 +59,18 @@ def main():
     # File Uploader
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
     
+    # Sidebar for Debugging
+    st.sidebar.title("🔧 Debug Options")
+    use_debug_mode = st.sidebar.checkbox("Activating Debug Mode", value=False)
+    
+    preprocess_mode = "mobilenet"
+    if use_debug_mode:
+        preprocess_mode = st.sidebar.selectbox(
+            "Preprocessing Mode",
+            ["mobilenet", "rescaling", "raw"],
+            help="mobilenet: [-1, 1], rescaling: [0, 1], raw: [0, 255]"
+        )
+
     if uploaded_file is not None:
         # Display Image
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
@@ -68,7 +80,18 @@ def main():
             with st.spinner("Analyzing image..."):
                 try:
                     # Preprocess
-                    input_tensor = preprocess_image(uploaded_file)
+                    if use_debug_mode:
+                        from utils import preprocess_image_debug
+                        input_tensor = preprocess_image_debug(uploaded_file, mode=preprocess_mode)
+                        
+                        # Show stats
+                        st.sidebar.write("Input Stats:")
+                        st.sidebar.write(f"Min: {input_tensor.min():.2f}")
+                        st.sidebar.write(f"Max: {input_tensor.max():.2f}")
+                        st.sidebar.write(f"Mean: {input_tensor.mean():.2f}")
+                        st.sidebar.write(f"Shape: {input_tensor.shape}")
+                    else:
+                        input_tensor = preprocess_image(uploaded_file)
                     
                     # Inference
                     logits = model.predict(input_tensor)
@@ -81,8 +104,17 @@ def main():
                     
                     # Display Results
                     st.success("Analysis Complete!")
-                    st.metric(label="Predicted Class", value=predicted_class)
-                    st.metric(label="Confidence", value=f"{confidence:.2f}%")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric(label="Predicted Class", value=predicted_class)
+                    with col2:
+                        st.metric(label="Confidence", value=f"{confidence:.2f}%")
+                    
+                    # Probability Chart
+                    st.subheader("Probability Distribution")
+                    probs_dict = {class_names[i]: float(probabilities[i]) for i in range(len(class_names))}
+                    st.bar_chart(probs_dict)
                     
                     # Optional: Show warnings for low confidence
                     if confidence < 60:
