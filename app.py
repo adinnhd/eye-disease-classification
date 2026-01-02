@@ -102,6 +102,29 @@ def main():
                     predicted_class = class_names[predicted_index]
                     confidence = probabilities[predicted_index] * 100
                     
+                    if use_debug_mode:
+                        st.subheader("🛠️ Deep Debugging")
+                        
+                        # 1. Input Stats
+                        st.write("**Input Tensor Stats:**")
+                        st.json({
+                            "min": float(input_tensor.min()),
+                            "max": float(input_tensor.max()),
+                            "mean": float(input_tensor.mean()),
+                            "shape": str(input_tensor.shape)
+                        })
+                        
+                        # 2. Raw Logits
+                        st.write("**Raw Logits (Pre-Softmax):**")
+                        st.write(logits[0].tolist())
+
+                        # 3. Model Architecture
+                        with st.expander("See Model Summary"):
+                            stringlist = []
+                            model.summary(print_fn=lambda x: stringlist.append(x))
+                            short_summary = "\n".join(stringlist)
+                            st.code(short_summary)
+                    
                     # Display Results
                     st.success("Analysis Complete!")
                     
@@ -115,13 +138,6 @@ def main():
                     st.subheader("Probability Distribution")
                     probs_dict = {class_names[i]: float(probabilities[i]) for i in range(len(class_names))}
                     st.bar_chart(probs_dict)
-                    
-                    # Optional: Show warnings for low confidence
-                    if confidence < 60:
-                        st.warning("⚠️ Low confidence prediction. Please consult a specialist.")
-                        
-                except Exception as e:
-                    st.error(f"An error occurred during prediction: {e}")
 
 if __name__ == "__main__":
     main()
