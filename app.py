@@ -138,6 +138,9 @@ def main():
                     st.subheader("Probability Distribution")
                     probs_dict = {class_names[i]: float(probabilities[i]) for i in range(len(class_names))}
                     st.bar_chart(probs_dict)
+                        
+                except Exception as e:
+                    st.error(f"An error occurred during prediction: {e}")
 
 if __name__ == "__main__":
     main()
