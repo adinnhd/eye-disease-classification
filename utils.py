@@ -28,26 +28,7 @@ def preprocess_image(image_file):
     # 5. Expand dims to create batch dimension (1, 256, 256, 3)
     img_array = np.expand_dims(img_array, axis=0)
     
-    # 6. Apply MobileNetV2 preprocessing (scales pixel values to [-1, 1])
-    # Standard MobileNetV2 expects [-1, 1]
-    img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+    # 6. Returns raw [0, 255] because the model has internal Rescaling layers
+    # Do NOT apply tf.keras.applications.mobilenet_v2.preprocess_input
     
     return img_array
-
-def preprocess_image_debug(image_file, mode="mobilenet"):
-    """
-    Debug version of preprocessing to test different scaling methods.
-    """
-    img = Image.open(image_file).convert("RGB").resize((256, 256))
-    img_array = np.array(img).astype(np.float32)
-    img_array = np.expand_dims(img_array, axis=0)
-    
-    if mode == "mobilenet":
-        # [-1, 1]
-        return tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
-    elif mode == "rescaling":
-        # [0, 1]
-        return img_array / 255.0
-    else:
-        # [0, 255] (Raw)
-        return img_array
